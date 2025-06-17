@@ -35,6 +35,8 @@ services:
     depends_on:
       - mysql
     command: webserver
+    env_file:
+      - .env                    # ✅ Loads AWS/Snowflake env vars
     networks:
       backend_net:
         ipv4_address: 172.20.0.4
@@ -46,6 +48,8 @@ services:
       - airflow_webserver
       - mysql
     command: scheduler
+    env_file:
+      - .env                    # ✅ Also needed here
     networks:
       backend_net:
         ipv4_address: 172.20.0.5
