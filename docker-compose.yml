@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+
+  mysql:
+    image: mysql:8
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: insurance_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      backend_net:
+        ipv4_address: 172.20.0.2
+
+  flask:
+    build: ./flask_app
+    container_name: flask_app
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mysql
+    networks:
+      backend_net:
+        ipv4_address: 172.20.0.3
+
+  airflow_webserver:
+    build: ./airflow
+    container_name: airflow_webserver
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    command: webserver
+    networks:
+      backend_net:
+        ipv4_address: 172.20.0.4
+
+  airflow_scheduler:
+    build: ./airflow
+    container_name: airflow_scheduler
+    depends_on:
+      - airflow_webserver
+      - mysql
+    command: scheduler
+    networks:
+      backend_net:
+        ipv4_address: 172.20.0.5
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - flask
+      - airflow_webserver
+    networks:
+      backend_net:
+        ipv4_address: 172.20.0.6
+
+networks:
+  backend_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
