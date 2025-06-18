@@ -36,10 +36,12 @@ services:
       - mysql
     command: webserver
     env_file:
-      - .env                    # ✅ Loads AWS/Snowflake env vars
+      - .env
     networks:
       backend_net:
         ipv4_address: 172.20.0.4
+    volumes:
+      - airflow_data:/opt/airflow
 
   airflow_scheduler:
     build: ./airflow
@@ -49,10 +51,12 @@ services:
       - mysql
     command: scheduler
     env_file:
-      - .env                    # ✅ Also needed here
+      - .env
     networks:
       backend_net:
         ipv4_address: 172.20.0.5
+    volumes:
+      - airflow_data:/opt/airflow
 
   nginx:
     image: nginx:latest
@@ -74,3 +78,6 @@ networks:
     ipam:
       config:
         - subnet: 172.20.0.0/16
+
+volumes:
+  airflow_data:
